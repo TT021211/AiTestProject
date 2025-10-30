@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket连接测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket连接测试</h1>
+    <div id="status">准备连接...</div>
+    <div id="log"></div>
+    <button onclick="testConnection()">测试连接</button>
+    <button onclick="sendMessage()">发送测试消息</button>
+
+    <script>
+        let socket = null;
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        function addLog(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(div);
+        }
+
+        function testConnection() {
+            addLog('开始测试WebSocket连接...', 'info');
+            
+            const wsUrl = 'ws://localhost:8080/chat';
+            addLog(`连接URL: ${wsUrl}`, 'info');
+            
+            try {
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function(event) {
+                    addLog('WebSocket连接成功！', 'success');
+                    status.textContent = '连接成功';
+                    status.className = 'success';
+                };
+                
+                socket.onmessage = function(event) {
+                    addLog(`收到消息: ${event.data}`, 'info');
+                };
+                
+                socket.onclose = function(event) {
+                    addLog(`连接关闭: ${event.code} - ${event.reason}`, 'error');
+                    status.textContent = '连接关闭';
+                    status.className = 'error';
+                };
+                
+                socket.onerror = function(error) {
+                    addLog(`连接错误: ${error}`, 'error');
+                    status.textContent = '连接错误';
+                    status.className = 'error';
+                };
+                
+            } catch (error) {
+                addLog(`创建WebSocket失败: ${error.message}`, 'error');
+                status.textContent = '创建连接失败';
+                status.className = 'error';
+            }
+        }
+
+        function sendMessage() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const message = '测试消息: ' + new Date().toLocaleTimeString();
+                socket.send(message);
+                addLog(`发送消息: ${message}`, 'info');
+            } else {
+                addLog('WebSocket未连接', 'error');
+            }
+        }
+
+        // 页面加载时自动测试
+        window.onload = function() {
+            addLog('页面加载完成，准备测试连接', 'info');
+        };
+    </script>
+</body>
+</html>
+
